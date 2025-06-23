@@ -12,6 +12,26 @@ class Author(db.Model):
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
     # Add validators 
+    @validates('name')
+    def validate_name(self, key, name):
+        if not name:
+            raise ValueError("Author must have a name.")
+        # Check uniqueness in the database
+        existing_author = Author.query.filter_by(name=name).first()
+        if existing_author and existing_author.id != self.id:
+            raise ValueError("Author name must be unique.")
+        return name
+
+    @validates('phone_number')
+    def validate_phone_number(self, key, phone_number):
+        if not phone_number:
+            raise ValueError("Phone number must be provided.")
+        if not phone_number.isdigit():
+            raise ValueError("Phone number must contain only digits.")
+        if len(phone_number) != 10:
+            raise ValueError("Phone number must be 10 digits.")
+        return phone_number
+    
 
     def __repr__(self):
         return f'Author(id={self.id}, name={self.name})'
@@ -28,6 +48,30 @@ class Post(db.Model):
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
     # Add validators  
+    @validates('content')
+    def validate_content(self, key, content):
+        if len(content) < 250:
+            raise ValueError("Post content must be at least 250 characters long.")
+        return content
+    
+    @validates('summary')
+    def validate_summary(self, key, summary):
+        if len(summary) > 250:
+            raise ValueError("Post summary must be less than or equal to 250 characters.")
+        return summary
+    
+    @validates('category')
+    def validate_category(self, key, category):
+        if category != "Fiction" and category != "Non-Fiction":
+            raise ValueError("Post category must be either Fiction or Non-Fiction.")
+        return category
+    
+    @validates('title')
+    def validate_title(self, key, title):
+        clickbait_words = ["Won't Believe", "Secret", "Top", "Guess"]
+        if not any(word in title for word in clickbait_words):
+            raise ValueError("Post title must be sufficiently clickbait-y.")
+        return title
 
 
     def __repr__(self):
